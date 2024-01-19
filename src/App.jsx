@@ -7,30 +7,19 @@ import logoImg from './assets/logo.png';
 import AvailablePlaces from './components/AvailablePlaces.jsx';
 import { fetchUserPlaces, updateUserPlaces } from './http.js';
 import Error from './components/Error.jsx';
-import { useEffect } from 'react';
+import { useFetch } from './hooks/useFetch.js';
 
 function App() {
   const selectedPlace = useRef();
-  const [userPlaces, setUserPlaces] = useState([]);
-  const [isFetching, setIsFetching] = useState(false);
-  const [error, setError] = useState();
   const [errorUpdatingPlaces, setErrorUpdatingPlaces] = useState();
   const [modalIsOpen, setModalIsOpen] = useState(false);
 
-  useEffect(() => {
-   async function fetchPlaces(){
-     setIsFetching(true);
-     try{
-      const places = await fetchUserPlaces();
-      setUserPlaces(places)
-     }
-    catch(error){
-    setError({message: error.message || 'Failed to fetch user places.'});
-   }
-   setIsFetching(false);
-   }
-   fetchPlaces();
-  }, []);
+const {
+  isFetching,
+  error,
+  fetchedData : userPlaces,
+  setFetchedData : setUserPlaces
+  } = useFetch(fetchUserPlaces, []);
 
   function handleStartRemovePlace(place) {
     setModalIsOpen(true);
@@ -70,16 +59,18 @@ function App() {
     setUserPlaces((prevPickedPlaces) =>
       prevPickedPlaces.filter((place) => place.id !== selectedPlace.current.id)
     );
-    try{
+    try {
     await updateUserPlaces
     (userPlaces.filter(place => place.id !== selectedPlace.current.id)
     );
-    }catch (error){
+    } catch (error){
       setUserPlaces(userPlaces);
       setErrorUpdatingPlaces({message: error.message || 'Failed to delete place'})
     }
     setModalIsOpen(false);
-  }, [userPlaces]);
+  }, 
+  [userPlaces, setUserPlaces]
+  );
 
 
 function handleError(){
